@@ -6,11 +6,11 @@ export const demoGenerate = inngest.createFunction(
   { id: "demo-generate" },
   { event: "demo/generate" },
   async ({ step }) => {
-    await step.sleep("generate-text", async () => {
+    await step.run("generate-text", async () => {
       return await generateText({
         model: google("gemini-2.5-flash"),
         prompt: "Say short about Taj Mahal in 1 online",
       });
     });
-  },
+  }
 );
