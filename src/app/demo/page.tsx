@@ -11,6 +11,11 @@ export default function DemoPage() {
     await fetch("/api/demo/blocking", { method: "POST" });
     setLoading(false);
   };
+
+  const handleClientError = () => {
+    throw new Error("Something went wrong");
+  };
+
   return (
     <div className="p-8 space-y-4">
       <Button onClick={handleBlocking}>
