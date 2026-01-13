@@ -14,8 +14,8 @@ import { SignInButton } from "@clerk/nextjs";
 
 export const UnauthenticatedView = () => {
   return (
-    <div className="flex items-center justify-center h-screen bg-background">
-      <div className="w-full max-w-lg bg-muted">
+    <div className="bg-background flex h-screen items-center justify-center">
+      <div className="bg-muted w-full max-w-lg">
         <Item variant="outline">
           <ItemMedia variant="icon">
             <ShieldAlertIcon />
