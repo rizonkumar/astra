@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { CommandIcon, SparkleIcon } from "lucide-react";
 import { Kbd } from "@/components/ui/kbd";
 import { FaGithub } from "react-icons/fa";
+import { ProjectList } from "./project-list";
+import { useCreateProject } from "../hooks/use-projects";
+import {
+  adjectives,
+  animals,
+  colors,
+  uniqueNamesGenerator,
+} from "unique-names-generator";
 
 const font = Poppins({
   subsets: ["latin"],
@@ -13,6 +21,8 @@ const font = Poppins({
 });
 
 export const ProjectsView = () => {
+  const createProject = useCreateProject();
+
   return (
     <div className="min-h-screen bg-sidebar flex flex-col items-center justify-center p-6 md:p-16">
       <div className="w-full max-w-sm mx-auto flex flex-col gap-4 items-center">
@@ -38,7 +48,16 @@ export const ProjectsView = () => {
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
-              onClick={() => {}}
+              onClick={() => {
+                const projectName = uniqueNamesGenerator({
+                  dictionaries: [adjectives, colors, animals],
+                  separator: "-",
+                  length: 3,
+                });
+                createProject({
+                  name: projectName,
+                });
+              }}
               className="h-full items-start justify-start p-4 bg-background border flex flex-col gap-6 rounded-none"
             >
               <div className="flex items-center justify-between w-full">
@@ -67,7 +86,7 @@ export const ProjectsView = () => {
               </div>
             </Button>
           </div>
-          <ProjectList />
+          <ProjectList onViewAll={() => {}} />
         </div>
       </div>
     </div>
