@@ -24,10 +24,10 @@ export const ProjectsView = () => {
   const createProject = useCreateProject();
 
   return (
-    <div className="min-h-screen bg-sidebar flex flex-col items-center justify-center p-6 md:p-16">
-      <div className="w-full max-w-sm mx-auto flex flex-col gap-4 items-center">
-        <div className="flex justify-between gap-4 w-full items-center">
-          <div className="flex items-center gap-2 w-full group/logo">
+    <div className="bg-sidebar flex min-h-screen flex-col items-center justify-center p-6 md:p-16">
+      <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4">
+        <div className="flex w-full items-center justify-between gap-4">
+          <div className="group/logo flex w-full items-center gap-2">
             <img
               src="/logo.svg"
               alt="Astra"
@@ -35,8 +35,8 @@ export const ProjectsView = () => {
             />
             <h1
               className={cn(
-                "text-4xl md:text-5xl font-semibold",
-                font.className
+                "text-4xl font-semibold md:text-5xl",
+                font.className,
               )}
             >
               Astra
@@ -44,7 +44,7 @@ export const ProjectsView = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 w-full">
+        <div className="flex w-full flex-col gap-4">
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
@@ -58,9 +58,9 @@ export const ProjectsView = () => {
                   name: projectName,
                 });
               }}
-              className="h-full items-start justify-start p-4 bg-background border flex flex-col gap-6 rounded-none"
+              className="bg-background flex h-full flex-col items-start justify-start gap-6 rounded-none border p-4"
             >
-              <div className="flex items-center justify-between w-full">
+              <div className="flex w-full items-center justify-between">
                 <SparkleIcon className="size-4" />
                 <Kbd className="bg-accent border">
                   <CommandIcon className="size-3" /> J
@@ -73,9 +73,9 @@ export const ProjectsView = () => {
             <Button
               variant="outline"
               onClick={() => {}}
-              className="h-full items-start justify-start p-4 bg-background border flex flex-col gap-6 rounded-none"
+              className="bg-background flex h-full flex-col items-start justify-start gap-6 rounded-none border p-4"
             >
-              <div className="flex items-center justify-between w-full">
+              <div className="flex w-full items-center justify-between">
                 <FaGithub className="size-4" />
                 <Kbd className="bg-accent border">
                   <CommandIcon className="size-3" /> I
