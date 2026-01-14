@@ -6,11 +6,13 @@ import {
   CommandIcon,
   GlobeIcon,
   Loader2Icon,
+  ArrowRightIcon,
 } from "lucide-react";
 import { Doc } from "../../../../convex/_generated/dataModel";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { FaGithub } from "react-icons/fa";
+import { Button } from "@/components/ui/button";
 
 const formatTimeStamp = (timestamp: number) => {
   return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
@@ -34,6 +36,32 @@ const getProjectIcon = (project: Doc<"projects">) => {
 interface ProjectListProps {
   onViewAll: () => void;
 }
+
+const ContinueCard = ({ data }: { data: Doc<"projects"> }) => {
+  return (
+    <div className="gap2 flex flex-col">
+      <span className="text-muted-foreground text-xs">Last Updated</span>
+      <Button
+        variant="outline"
+        asChild
+        className="bg-background flex h-auto flex-col items-start justify-start gap-2 rounded-none border p-4"
+      >
+        <Link href={`/projects/${data._id}`} className="group">
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-center gap-2">
+              {getProjectIcon(data)}
+              <span className="truncate font-medium">{data.name}</span>
+            </div>
+            <ArrowRightIcon className="size-4text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </div>
+          <span className="text-muted-foreground text-xs">
+            {formatTimeStamp(data.updatedAt ?? 0)}
+          </span>
+        </Link>
+      </Button>
+    </div>
+  );
+};
 
 const ProjectItem = ({ data }: { data: Doc<"projects"> }) => {
   return (
@@ -63,7 +91,8 @@ export const ProjectList = ({ onViewAll }: ProjectListProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      {projects.length > 0 && (
+      {mostRecent ? <ContinueCard data={mostRecent} /> : null}
+      {rest.length > 0 && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground text-xs">
@@ -77,7 +106,7 @@ export const ProjectList = ({ onViewAll }: ProjectListProps) => {
             </button>
           </div>
           <ul className="flex flex-col">
-            {projects.map((project) => (
+            {rest.map((project) => (
               <ProjectItem key={project._id} data={project} />
             ))}
           </ul>

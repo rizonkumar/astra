@@ -72,7 +72,7 @@ export const ProjectsView = () => {
             </Button>
             <Button
               variant="outline"
-              onClick={() => {}}
+              onClick={async () => {}}
               className="bg-background flex h-full flex-col items-start justify-start gap-6 rounded-none border p-4"
             >
               <div className="flex w-full items-center justify-between">
