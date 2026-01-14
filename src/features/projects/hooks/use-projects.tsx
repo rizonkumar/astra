@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 export const useProjects = () => {
   return useQuery(api.projects.get);
@@ -10,5 +11,25 @@ export const usePartialProjects = (limit: number) => {
 };
 
 export const useCreateProject = () => {
-  return useMutation(api.projects.create);
+  return useMutation(api.projects.create).withOptimisticUpdate(
+    (localStore, args) => {
+      const existingProjects = localStore.getQuery(api.projects.get);
+      if (existingProjects !== undefined) {
+        // eslint-disable-next-line react-hooks/purity
+        const now = Date.now();
+        const newProject = {
+          _id: crypto.randomUUID() as Id<"projects">,
+          _creationTime: now,
+          name: args.name,
+          ownerId: "anonymous",
+          updatedAt: now,
+        };
+
+        localStore.setQuery(api.projects.get, {}, [
+          newProject,
+          ...(existingProjects ?? []),
+        ]);
+      }
+    },
+  );
 };
