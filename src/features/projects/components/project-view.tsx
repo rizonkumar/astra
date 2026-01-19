@@ -14,6 +14,8 @@ import {
   colors,
   uniqueNamesGenerator,
 } from "unique-names-generator";
+import { useState } from "react";
+import { ProjectCommandDialog } from "./project-command-dialog";
 
 const font = Poppins({
   subsets: ["latin"],
@@ -22,8 +24,11 @@ const font = Poppins({
 
 export const ProjectsView = () => {
   const createProject = useCreateProject();
+  const [commandDialogOpen, setCommandDialogOpen] = useState(false);
 
   return (
+    <>
+    <ProjectCommandDialog open={commandDialogOpen} onOpenChange={setCommandDialogOpen} /> 
     <div className="bg-sidebar flex min-h-screen flex-col items-center justify-center p-6 md:p-16">
       <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4">
         <div className="flex w-full items-center justify-between gap-4">
@@ -86,9 +91,10 @@ export const ProjectsView = () => {
               </div>
             </Button>
           </div>
-          <ProjectList onViewAll={() => {}} />
+          <ProjectList onViewAll={() => setCommandDialogOpen(true)} />
         </div>
       </div>
     </div>
+    </>
   );
 };
