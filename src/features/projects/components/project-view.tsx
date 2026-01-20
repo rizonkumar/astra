@@ -14,7 +14,7 @@ import {
   colors,
   uniqueNamesGenerator,
 } from "unique-names-generator";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProjectCommandDialog } from "./project-command-dialog";
 
 const font = Poppins({
@@ -24,7 +24,22 @@ const font = Poppins({
 
 export const ProjectsView = () => {
   const createProject = useCreateProject();
+  
   const [commandDialogOpen, setCommandDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        if(event.key === "k") {
+          event.preventDefault();
+          setCommandDialogOpen(true);
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
 
   return (
     <>
