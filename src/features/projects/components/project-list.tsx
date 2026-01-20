@@ -11,28 +11,13 @@ import {
 import { Doc } from "../../../../convex/_generated/dataModel";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { FaGithub } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
+import { getProjectIcon } from "../utils/get-project-icon";
 
 const formatTimeStamp = (timestamp: number) => {
   return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
 };
 
-const getProjectIcon = (project: Doc<"projects">) => {
-  if (project.importStatus === "completed") {
-    return <FaGithub className="text-muted-foreground size-3.5" />;
-  }
-  if (project.importStatus === "failed") {
-    return <AlertCircleIcon className="text-muted-foreground size-3.5" />;
-  }
-
-  if (project.importStatus === "importing") {
-    return (
-      <Loader2Icon className="text-muted-foreground size-3.5 animate-spin" />
-    );
-  }
-  return <GlobeIcon className="text-muted-foreground size-3.5" />;
-};
 interface ProjectListProps {
   onViewAll: () => void;
 }
@@ -49,7 +34,7 @@ const ContinueCard = ({ data }: { data: Doc<"projects"> }) => {
         <Link href={`/projects/${data._id}`} className="group">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-2">
-              {getProjectIcon(data)}
+              {getProjectIcon(data, "size-3.5")}
               <span className="truncate font-medium">{data.name}</span>
             </div>
             <ArrowRightIcon className="size-4text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -70,7 +55,7 @@ const ProjectItem = ({ data }: { data: Doc<"projects"> }) => {
       className="text-foreground/60 hover:text-foreground group flex w-full items-center justify-between py-1 text-sm font-medium"
     >
       <div className="flex items-center gap-2">
-        {getProjectIcon(data)}
+        {getProjectIcon(data, "size-3.5")}
         <span className="truncate">{data.name}</span>
       </div>
       <span className="text-muted-foreground group-hover:text-foreground/60 text-xs transition-colors">
