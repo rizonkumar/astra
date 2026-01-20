@@ -8,13 +8,14 @@ import { Kbd } from "@/components/ui/kbd";
 import { FaGithub } from "react-icons/fa";
 import { ProjectList } from "./project-list";
 import { useCreateProject } from "../hooks/use-projects";
+import Image from "next/image";
 import {
   adjectives,
   animals,
   colors,
   uniqueNamesGenerator,
 } from "unique-names-generator";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ProjectCommandDialog } from "./project-command-dialog";
 
 const font = Poppins({
@@ -27,18 +28,33 @@ export const ProjectsView = () => {
   
   const [commandDialogOpen, setCommandDialogOpen] = useState(false);
 
+  const handleCreateProject = useCallback(() => {
+    const projectName = uniqueNamesGenerator({
+      dictionaries: [adjectives, colors, animals],
+      separator: "-",
+      length: 3,
+    });
+    createProject({
+      name: projectName,
+    });
+  }, [createProject]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey) {
-        if(event.key === "k") {
+        if (event.key === "k") {
           event.preventDefault();
           setCommandDialogOpen(true);
+        }
+        if (event.key === "j") {
+          event.preventDefault();
+          handleCreateProject();
         }
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [handleCreateProject]);
 
 
   return (
@@ -48,9 +64,11 @@ export const ProjectsView = () => {
       <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-4">
         <div className="flex w-full items-center justify-between gap-4">
           <div className="group/logo flex w-full items-center gap-2">
-            <img
+            <Image
               src="/logo.svg"
               alt="Astra"
+              width={46}
+              height={46}
               className="size-[32px] md:size-[46px]"
             />
             <h1
@@ -68,16 +86,7 @@ export const ProjectsView = () => {
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
-              onClick={() => {
-                const projectName = uniqueNamesGenerator({
-                  dictionaries: [adjectives, colors, animals],
-                  separator: "-",
-                  length: 3,
-                });
-                createProject({
-                  name: projectName,
-                });
-              }}
+              onClick={handleCreateProject}
               className="bg-background flex h-full flex-col items-start justify-start gap-6 rounded-none border p-4"
             >
               <div className="flex w-full items-center justify-between">
