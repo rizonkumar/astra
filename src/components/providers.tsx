@@ -2,7 +2,7 @@
 
 import React from "react";
 
-import { ClerkProvider, useAuth, UserButton } from "@clerk/nextjs";
+import { ClerkProvider, useAuth } from "@clerk/nextjs";
 import {
   Authenticated,
   Unauthenticated,
@@ -32,7 +32,6 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
           disableTransitionOnChange
         >
           <Authenticated>
-            <UserButton />
             {children}
           </Authenticated>
           <Unauthenticated>
