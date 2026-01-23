@@ -45,3 +45,22 @@ export const get = query({
       .collect();
   },
 });
+
+export const getById = query({
+  args: {
+    id: v.id("projects"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await verifyAuth(ctx);
+    const project = await ctx.db.get("projects", args.id);
+
+    if (!project) {
+      throw new Error("Project not found");
+    }
+
+    if (project.ownerId !== identity.subject) {
+      throw new Error("Unauthorized to access this project");
+    }
+    return project;
+  },
+});
