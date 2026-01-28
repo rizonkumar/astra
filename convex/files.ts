@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { verifyAuth } from "./auth";
+import { Id } from "./_generated/dataModel";
 
 export const getFiles = query({
   args: { projectId: v.id("projects") },
@@ -125,6 +126,10 @@ export const createFile = mutation({
       content: args.content,
       updatedAt: Date.now(),
     });
+
+    await ctx.db.patch("projects", args.projectId, {
+      updatedAt: Date.now(),
+    });
   },
 });
 
@@ -167,6 +172,10 @@ export const createFolder = mutation({
       parentId: args.parentId,
       name: args.name,
       type: "folder",
+      updatedAt: Date.now(),
+    });
+
+    await ctx.db.patch("projects", args.projectId, {
       updatedAt: Date.now(),
     });
   },
@@ -216,6 +225,101 @@ export const renameFile = mutation({
     await ctx.db.patch("files", args.id, {
       name: args.newName,
       updatedAt: Date.now(),
+    });
+
+    await ctx.db.patch("projects", file.projectId, {
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const deleteFile = mutation({
+  args: { id: v.id("files") },
+  handler: async (ctx, args) => {
+    const identity = await verifyAuth(ctx);
+
+    const file = await ctx.db.get("files", args.id);
+
+    if (!file) {
+      throw new Error("File not found");
+    }
+
+    const project = await ctx.db.get("projects", file.projectId);
+
+    if (!project) {
+      throw new Error("Project not found");
+    }
+
+    if (project.ownerId !== identity.subject) {
+      throw new Error("Unauthorized to access this project");
+    }
+
+    const deleteRecursive = async (fileId: Id<"files">) => {
+      const item = await ctx.db.get("files", fileId);
+      if (!item) {
+        throw new Error("File not found");
+      }
+
+      if (item.type === "folder") {
+        const children = await ctx.db
+          .query("files")
+          .withIndex("by_project_parent", (q) =>
+            q.eq("projectId", item.projectId).eq("parentId", item._id),
+          )
+          .collect();
+
+        for (const child of children) {
+          await deleteRecursive(child._id);
+        }
+      }
+
+      if (item.storageId) {
+        await ctx.storage.delete(item.storageId);
+      }
+      await ctx.db.delete("files", fileId);
+    };
+    await deleteRecursive(args.id);
+
+    await ctx.db.patch("projects", file.projectId, {
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const updateFile = mutation({
+  args: { id: v.id("files"), content: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await verifyAuth(ctx);
+
+    if (!identity) {
+      throw new Error("Unauthorized");
+    }
+
+    const file = await ctx.db.get("files", args.id);
+
+    if (!file) {
+      throw new Error("File not found");
+    }
+
+    const project = await ctx.db.get("projects", file.projectId);
+
+    if (!project) {
+      throw new Error("Project not found");
+    }
+
+    if (project.ownerId !== identity.subject) {
+      throw new Error("Unauthorized to access this project");
+    }
+
+    const now = Date.now();
+
+    await ctx.db.patch("files", args.id, {
+      content: args.content,
+      updatedAt: now,
+    });
+
+    await ctx.db.patch("projects", file.projectId, {
+      updatedAt: now,
     });
   },
 });
