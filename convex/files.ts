@@ -1,22 +1,46 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, MutationCtx, QueryCtx } from "./_generated/server";
 import { verifyAuth } from "./auth";
 import { Id } from "./_generated/dataModel";
+
+async function verifyProjectAccess(
+  ctx: QueryCtx | MutationCtx,
+  projectId: Id<"projects">,
+) {
+  const identity = await verifyAuth(ctx);
+
+  const project = await ctx.db.get("projects", projectId);
+
+  if (!project) {
+    throw new Error("Project not found");
+  }
+
+  if (project.ownerId !== identity.subject) {
+    throw new Error("Unauthorized to access this project");
+  }
+
+  return { identity, project };
+}
+
+async function verifyFileAccess(
+  ctx: QueryCtx | MutationCtx,
+  fileId: Id<"files">,
+) {
+  const file = await ctx.db.get("files", fileId);
+
+  if (!file) {
+    throw new Error("File not found");
+  }
+
+  const { identity, project } = await verifyProjectAccess(ctx, file.projectId);
+
+  return { identity, project, file };
+}
 
 export const getFiles = query({
   args: { projectId: v.id("projects") },
   handler: async (ctx, args) => {
-    const identity = await verifyAuth(ctx);
-
-    const project = await ctx.db.get("projects", args.projectId);
-
-    if (!project) {
-      throw new Error("Project not found");
-    }
-
-    if (project.ownerId !== identity.subject) {
-      throw new Error("Unauthorized to access this project");
-    }
+    await verifyProjectAccess(ctx, args.projectId);
 
     return await ctx.db
       .query("files")
@@ -28,27 +52,7 @@ export const getFiles = query({
 export const getFile = query({
   args: { id: v.id("files") },
   handler: async (ctx, args) => {
-    const identity = await verifyAuth(ctx);
-    if (!identity) {
-      throw new Error("Unauthorized");
-    }
-
-    const file = await ctx.db.get("files", args.id);
-
-    if (!file) {
-      throw new Error("File not found");
-    }
-
-    const project = await ctx.db.get("projects", file.projectId);
-
-    if (!project) {
-      throw new Error("Project not found");
-    }
-
-    if (project.ownerId !== identity.subject) {
-      throw new Error("Unauthorized to access this project");
-    }
-
+    const { file } = await verifyFileAccess(ctx, args.id);
     return file;
   },
 });
@@ -56,17 +60,7 @@ export const getFile = query({
 export const getFolderContents = query({
   args: { projectId: v.id("projects"), parentId: v.optional(v.id("files")) },
   handler: async (ctx, args) => {
-    const identity = await verifyAuth(ctx);
-
-    const project = await ctx.db.get("projects", args.projectId);
-
-    if (!project) {
-      throw new Error("Project not found");
-    }
-
-    if (project.ownerId !== identity.subject) {
-      throw new Error("Unauthorized to access this project");
-    }
+    await verifyProjectAccess(ctx, args.projectId);
 
     const files = await ctx.db
       .query("files")
@@ -91,17 +85,7 @@ export const createFile = mutation({
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await verifyAuth(ctx);
-
-    const project = await ctx.db.get("projects", args.projectId);
-
-    if (!project) {
-      throw new Error("Project not found");
-    }
-
-    if (project.ownerId !== identity.subject) {
-      throw new Error("Unauthorized to access this project");
-    }
+    await verifyProjectAccess(ctx, args.projectId);
 
     const files = await ctx.db
       .query("files")
@@ -140,17 +124,7 @@ export const createFolder = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await verifyAuth(ctx);
-
-    const project = await ctx.db.get("projects", args.projectId);
-
-    if (!project) {
-      throw new Error("Project not found");
-    }
-
-    if (project.ownerId !== identity.subject) {
-      throw new Error("Unauthorized to access this project");
-    }
+    await verifyProjectAccess(ctx, args.projectId);
 
     const folders = await ctx.db
       .query("files")
@@ -184,23 +158,7 @@ export const createFolder = mutation({
 export const renameFile = mutation({
   args: { id: v.id("files"), newName: v.string() },
   handler: async (ctx, args) => {
-    const identity = await verifyAuth(ctx);
-
-    const file = await ctx.db.get("files", args.id);
-
-    if (!file) {
-      throw new Error("File not found");
-    }
-
-    const project = await ctx.db.get("projects", file.projectId);
-
-    if (!project) {
-      throw new Error("Project not found");
-    }
-
-    if (project.ownerId !== identity.subject) {
-      throw new Error("Unauthorized to access this project");
-    }
+    const { file } = await verifyFileAccess(ctx, args.id);
 
     const sibiling = await ctx.db
       .query("files")
@@ -236,23 +194,7 @@ export const renameFile = mutation({
 export const deleteFile = mutation({
   args: { id: v.id("files") },
   handler: async (ctx, args) => {
-    const identity = await verifyAuth(ctx);
-
-    const file = await ctx.db.get("files", args.id);
-
-    if (!file) {
-      throw new Error("File not found");
-    }
-
-    const project = await ctx.db.get("projects", file.projectId);
-
-    if (!project) {
-      throw new Error("Project not found");
-    }
-
-    if (project.ownerId !== identity.subject) {
-      throw new Error("Unauthorized to access this project");
-    }
+    const { file } = await verifyFileAccess(ctx, args.id);
 
     const deleteRecursive = async (fileId: Id<"files">) => {
       const item = await ctx.db.get("files", fileId);
@@ -289,27 +231,7 @@ export const deleteFile = mutation({
 export const updateFile = mutation({
   args: { id: v.id("files"), content: v.string() },
   handler: async (ctx, args) => {
-    const identity = await verifyAuth(ctx);
-
-    if (!identity) {
-      throw new Error("Unauthorized");
-    }
-
-    const file = await ctx.db.get("files", args.id);
-
-    if (!file) {
-      throw new Error("File not found");
-    }
-
-    const project = await ctx.db.get("projects", file.projectId);
-
-    if (!project) {
-      throw new Error("Project not found");
-    }
-
-    if (project.ownerId !== identity.subject) {
-      throw new Error("Unauthorized to access this project");
-    }
+    const { file } = await verifyFileAccess(ctx, args.id);
 
     const now = Date.now();
 
