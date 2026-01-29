@@ -1,11 +1,21 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ChevronRightIcon } from "lucide-react";
+import {
+  ChevronRightIcon,
+  CopyMinusIcon,
+  FilePlusCornerIcon,
+  FolderPlusIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useProject } from "../../hooks/use-projects";
+import { Button } from "@/components/ui/button";
 
 export const FileExplorer = ({ projectId }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [collapseKey, setCollapseKey] = useState(0);
+  const [creating, setCreating] =
+    (useState < "file") | "folder" | (null > null);
+
   const project = useProject(projectId);
 
   return (
@@ -25,6 +35,41 @@ export const FileExplorer = ({ projectId }) => {
           <p className="line-clamp-1 text-xs uppercase">
             {project?.name ?? "Loading..."}
           </p>
+          <div className="ml-auto flex items-center gap-0.5 opacity-0 transition-none duration-0 group-hover/project:opacity-100">
+            <Button
+              variant="highlight"
+              size="icon-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setIsOpen(true);
+              }}
+            >
+              <FilePlusCornerIcon className="size-3.5" />
+            </Button>
+            <Button
+              variant="highlight"
+              size="icon-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setIsOpen(true);
+              }}
+            >
+              <FolderPlusIcon className="size-3.5" />
+            </Button>
+            <Button
+              variant="highlight"
+              size="icon-xs"
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setCollapseKey((key) => key + 1);
+              }}
+            >
+              <CopyMinusIcon className="size-3.5" />
+            </Button>
+          </div>
         </div>
       </ScrollArea>
     </div>
