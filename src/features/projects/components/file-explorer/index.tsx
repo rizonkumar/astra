@@ -9,14 +9,27 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useProject } from "../../hooks/use-projects";
 import { Button } from "@/components/ui/button";
+import { useCreateFile, useCreateFolder } from "../../hooks/use-files";
+import { CreateInput } from "./create-input";
+import { Id } from "../../../../../convex/_generated/dataModel";
 
-export const FileExplorer = ({ projectId }) => {
+export const FileExplorer = ({ projectId }: { projectId: Id<"projects"> }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [collapseKey, setCollapseKey] = useState(0);
-  const [creating, setCreating] =
-    (useState < "file") | "folder" | (null > null);
+  const [creating, setCreating] = useState<"file" | "folder" | null>(null);
 
   const project = useProject(projectId);
+  const createFile = useCreateFile();
+  const createFolder = useCreateFolder();
+
+  const handleCreate = (name: string) => {
+    setCreating(null);
+    if (creating === "file") {
+      createFile({ projectId, name, content: "", parentId: undefined });
+    } else if (creating === "folder") {
+      createFolder({ projectId, name, parentId: undefined });
+    }
+  };
 
   return (
     <div className="bg-sidebar h-full">
@@ -43,6 +56,7 @@ export const FileExplorer = ({ projectId }) => {
                 e.stopPropagation();
                 e.preventDefault();
                 setIsOpen(true);
+                setCreating("file");
               }}
             >
               <FilePlusCornerIcon className="size-3.5" />
@@ -54,6 +68,7 @@ export const FileExplorer = ({ projectId }) => {
                 e.stopPropagation();
                 e.preventDefault();
                 setIsOpen(true);
+                setCreating("folder");
               }}
             >
               <FolderPlusIcon className="size-3.5" />
@@ -71,6 +86,19 @@ export const FileExplorer = ({ projectId }) => {
             </Button>
           </div>
         </div>
+        {isOpen && (
+          <>
+            {creating && (
+              <CreateInput
+                type={creating}
+                onSubmit={handleCreate}
+                level={0}
+                onCancel={() => setCreating(null)}
+                key={creating}
+              />
+            )}
+          </>
+        )}
       </ScrollArea>
     </div>
   );
