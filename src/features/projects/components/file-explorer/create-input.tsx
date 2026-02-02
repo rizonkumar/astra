@@ -1,6 +1,7 @@
 import { ChevronRightIcon } from "lucide-react";
 import { FileIcon, FolderIcon } from "@react-symbols/icons/utils";
 import { useState } from "react";
+import { getItemPadding } from "./constants";
 
 export const CreateInput = ({
   type,
@@ -24,7 +25,10 @@ export const CreateInput = ({
     }
   };
   return (
-    <div className="bg-accent/30 flex h-5.5 w-full items-center gap-1">
+    <div
+      className="bg-accent/30 flex h-5.5 w-full items-center gap-1"
+      style={{ paddingLeft: getItemPadding(level, type === "file") }}
+    >
       <div className="flex items-center gap-0.5">
         {type === "folder" && (
           <ChevronRightIcon className="text-muted-foreground size-3.5 shrink-0" />
