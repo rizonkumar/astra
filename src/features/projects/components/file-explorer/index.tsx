@@ -17,6 +17,7 @@ import {
 import { CreateInput } from "./create-input";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import { LoadingRow } from "./loading-row";
+import { Tree } from "./tree";
 
 export const FileExplorer = ({ projectId }: { projectId: Id<"projects"> }) => {
   const [isOpen, setIsOpen] = useState(false);
