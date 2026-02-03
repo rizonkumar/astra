@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, MutationCtx, QueryCtx } from "./_generated/server";
 import { verifyAuth } from "./auth";
-import { Id } from "./_generated/dataModel";
+import { Doc, Id } from "./_generated/dataModel";
 
 async function verifyProjectAccess(
   ctx: QueryCtx | MutationCtx,
@@ -54,6 +54,29 @@ export const getFile = query({
   handler: async (ctx, args) => {
     const { file } = await verifyFileAccess(ctx, args.id);
     return file;
+  },
+});
+
+export const getFilePath = query({
+  args: { id: v.id("files") },
+  handler: async (ctx, args) => {
+    await verifyFileAccess(ctx, args.id);
+
+    const path: { _id: string; name: string }[] = [];
+
+    let currentId: Id<"files"> | undefined = args.id;
+
+    while (currentId) {
+      const file = (await ctx.db.get("files", currentId)) as
+        | Doc<"files">
+        | undefined;
+      if (!file) break;
+
+      path.unshift({ _id: file._id, name: file.name });
+      currentId = file.parentId;
+    }
+
+    return path;
   },
 });
 
