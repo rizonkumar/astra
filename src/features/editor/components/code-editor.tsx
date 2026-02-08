@@ -5,6 +5,8 @@ import { indentWithTab } from "@codemirror/commands";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { customTheme } from "../extensions/theme";
 import { getLanguageExtension } from "../extensions/language-extension";
+import { miniMap } from "../extensions/minimap";
+import { indentationMarkers } from "@replit/codemirror-indentation-markers";
 
 interface Props {
   fileName: string;
@@ -44,6 +46,8 @@ export const CodeEditor = ({ fileName }: Props) => {
         basicSetup,
         languageExtension,
         keymap.of([indentWithTab]),
+        miniMap(),
+        indentationMarkers(),
       ],
     });
 
