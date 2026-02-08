@@ -10,9 +10,11 @@ import { customSetup } from "../extensions/custom-setup";
 
 interface Props {
   fileName: string;
+  initialValue: string;
+  onChange: (value: string) => void;
 }
 
-export const CodeEditor = ({ fileName }: Props) => {
+export const CodeEditor = ({ fileName, initialValue, onChange }: Props) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
 
@@ -25,20 +27,7 @@ export const CodeEditor = ({ fileName }: Props) => {
     if (!editorRef.current) return;
 
     const view = new EditorView({
-      doc: `
-      // This is a React component that displays a counter with increment and decrement buttons.
-      import { useState } from "react";
-      const Counter = () => {
-        const [value, setValue] = useState(0);
-        const onIncrement = () => setValue(value + 1);
-        const onDecrement = () => setValue(value - 1);
-        return (
-          <div>
-            <button onClick={onIncrement}>{value}</button>
-            <button onClick={onDecrement}>{value}</button>
-          </div>
-        );
-      }`,
+      doc: initialValue,
       parent: editorRef.current,
       extensions: [
         oneDark,
@@ -48,6 +37,11 @@ export const CodeEditor = ({ fileName }: Props) => {
         keymap.of([indentWithTab]),
         miniMap(),
         indentationMarkers(),
+        EditorView.updateListener.of((update) => {
+          if (update.docChanged) {
+            onChange(update.view.state.doc.toString());
+          }
+        }),
       ],
     });
 
@@ -55,7 +49,8 @@ export const CodeEditor = ({ fileName }: Props) => {
     return () => {
       view.destroy();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps  -- initialValue is only used for initial document
+  }, [languageExtension]);
 
   return <div ref={editorRef} className="bg-background size-full pl-4" />;
 };
