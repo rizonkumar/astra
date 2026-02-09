@@ -13,12 +13,11 @@ const setSuggestionEffect = StateEffect.define<string | null>();
 
 const suggestionState = StateField.define<string | null>({
   create() {
-    return ""; // TODO: Implement suggestion state
+    return null;
   },
   update(value, transaction) {
     for (const effect of transaction.effects) {
       if (effect.is(setSuggestionEffect)) {
-        console.log("setSuggestionEffect", effect.value);
         return effect.value;
       }
     }
@@ -38,6 +37,61 @@ class SuggestionWidget extends WidgetType {
     return span;
   }
 }
+
+let debounceTimer: number | null = null;
+let isWaitingForSuggestion = false;
+const DEBOUNCE_DELAY = 300;
+
+const generateFakeSuggestion = (textBeforeCursor: string): string | null => {
+  const trimmed = textBeforeCursor.trimEnd();
+  if (trimmed.endsWith("const")) return " myVariable = ";
+  if (trimmed.endsWith("function")) return " myFunction() { rizon}";
+  if (trimmed.endsWith("class")) return " myClass { }";
+  if (trimmed.endsWith("interface")) return " myInterface { }";
+  if (trimmed.endsWith("type")) return " myType { }";
+  if (trimmed.endsWith("enum")) return " myEnum { }";
+  if (trimmed.endsWith("let")) return " myVariable = ";
+  if (trimmed.endsWith("var")) return " myVariable = ";
+  if (trimmed.endsWith("while")) return " while (condition) { }";
+
+  return null;
+};
+
+const createDebouncePlugin = (fileName: string) => {
+  return ViewPlugin.fromClass(
+    class {
+      constructor(view: EditorView) {
+        this.triggerSuggestion(view);
+      }
+
+      update(update: ViewUpdate) {
+        if (update.docChanged || update.selectionSet) {
+          this.triggerSuggestion(update.view);
+        }
+      }
+      triggerSuggestion(view: EditorView) {
+        if (debounceTimer !== null) {
+          clearTimeout(debounceTimer);
+        }
+        isWaitingForSuggestion = true;
+        debounceTimer = window.setTimeout(async () => {
+          // Fake suggestion (delete this block later)
+          const cursor = view.state.selection.main.head;
+          const line = view.state.doc.lineAt(cursor);
+          const textBeforeCursor = line.text.slice(0, cursor - line.from);
+          const suggestion = generateFakeSuggestion(textBeforeCursor);
+          isWaitingForSuggestion = false;
+          view.dispatch({ effects: [setSuggestionEffect.of(suggestion)] });
+        }, DEBOUNCE_DELAY);
+      }
+      destroy() {
+        if (debounceTimer !== null) {
+          clearTimeout(debounceTimer);
+        }
+      }
+    },
+  );
+};
 
 const renderPlugin = ViewPlugin.fromClass(
   class {
@@ -61,6 +115,10 @@ const renderPlugin = ViewPlugin.fromClass(
       }
     }
     build(view: EditorView) {
+      if (isWaitingForSuggestion) {
+        return Decoration.none;
+      }
+
       const suggestion = view.state.field(suggestionState);
       if (!suggestion) {
         return Decoration.none;
@@ -94,8 +152,9 @@ const acceptSuggestionKeyMap = keymap.of([
   },
 ]);
 
-export const suggestion = (fileName: string): Extension => {
-  console.log("suggestion", fileName);
-
-  return [suggestionState, renderPlugin, acceptSuggestionKeyMap];
-};
+export const suggestion = (fileName: string): Extension => [
+  suggestionState,
+  createDebouncePlugin(fileName),
+  renderPlugin,
+  acceptSuggestionKeyMap,
+];

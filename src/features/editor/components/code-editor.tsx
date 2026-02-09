@@ -35,8 +35,8 @@ export const CodeEditor = ({
       oneDark,
       customTheme,
       customSetup,
-      keymap.of([indentWithTab]),
       suggestion(fileName),
+      keymap.of([indentWithTab]),
       miniMap(),
       indentationMarkers(),
       EditorView.updateListener.of((update) => {
