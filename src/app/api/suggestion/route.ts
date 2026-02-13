@@ -2,6 +2,7 @@ import { generateText, Output } from "ai";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { google } from "@ai-sdk/google";
+import { auth } from "@clerk/nextjs/server";
 
 const suggestionSchema = z.object({
   suggestion: z
@@ -67,6 +68,12 @@ If the instruction is unclear or cannot be applied, return the original code unc
 
 export async function POST(request: Request) {
   try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const {
       fileName,
       code,
@@ -91,6 +98,7 @@ export async function POST(request: Request) {
       .replace("{lineNumber}", lineNumber.toString());
 
     const { output } = await generateText({
+      // TODO: use a better model
       model: google("gemini-2.5-flash"),
       output: Output.object({ schema: suggestionSchema }),
       prompt: prompt,
