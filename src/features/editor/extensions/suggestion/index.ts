@@ -8,6 +8,7 @@ import {
   WidgetType,
 } from "@codemirror/view";
 import { Extension, StateEffect, StateField } from "@codemirror/state";
+import { fetcher } from "./fetcher";
 
 const setSuggestionEffect = StateEffect.define<string | null>();
 
@@ -40,21 +41,42 @@ class SuggestionWidget extends WidgetType {
 
 let debounceTimer: number | null = null;
 let isWaitingForSuggestion = false;
+let currentAbortController: AbortController | null = null;
+
 const DEBOUNCE_DELAY = 300;
 
-const generateFakeSuggestion = (textBeforeCursor: string): string | null => {
-  const trimmed = textBeforeCursor.trimEnd();
-  if (trimmed.endsWith("const")) return " myVariable = ";
-  if (trimmed.endsWith("function")) return " myFunction() { rizon}";
-  if (trimmed.endsWith("class")) return " myClass { }";
-  if (trimmed.endsWith("interface")) return " myInterface { }";
-  if (trimmed.endsWith("type")) return " myType { }";
-  if (trimmed.endsWith("enum")) return " myEnum { }";
-  if (trimmed.endsWith("let")) return " myVariable = ";
-  if (trimmed.endsWith("var")) return " myVariable = ";
-  if (trimmed.endsWith("while")) return " while (condition) { }";
+const generatePayload = (view: EditorView, fileName: string) => {
+  const code = view.state.doc.toString();
+  if (!code || code.trim().length === 0) return null;
 
-  return null;
+  const cursorPosition = view.state.selection.main.head;
+  const currentLine = view.state.doc.lineAt(cursorPosition);
+  const cursorInLine = cursorPosition - currentLine.from;
+  const previousLines: string[] = [];
+  const previousLinesToFetch = Math.min(5, currentLine.number - 1);
+
+  for (let i = previousLinesToFetch; i >= 1; i--) {
+    previousLines.push(view.state.doc.line(currentLine.number - i).text);
+  }
+
+  const nextLines: string[] = [];
+  const totalLines = view.state.doc.lines;
+  const linesToFetch = Math.min(5, totalLines - currentLine.number);
+
+  for (let i = 1; i <= linesToFetch; i++) {
+    nextLines.push(view.state.doc.line(currentLine.number + i).text);
+  }
+
+  return {
+    fileName,
+    code,
+    currentLine: currentLine.text,
+    previousLines: previousLines.join("\n"),
+    textBeforeCursor: currentLine.text.slice(0, cursorInLine),
+    textAfterCursor: currentLine.text.slice(cursorInLine),
+    nextLines: nextLines.join("\n"),
+    lineNumber: currentLine.number,
+  };
 };
 
 const createDebouncePlugin = (fileName: string) => {
@@ -73,13 +95,26 @@ const createDebouncePlugin = (fileName: string) => {
         if (debounceTimer !== null) {
           clearTimeout(debounceTimer);
         }
+
+        if (currentAbortController !== null) {
+          currentAbortController.abort();
+        }
+
         isWaitingForSuggestion = true;
         debounceTimer = window.setTimeout(async () => {
-          // Fake suggestion (delete this block later)
-          const cursor = view.state.selection.main.head;
-          const line = view.state.doc.lineAt(cursor);
-          const textBeforeCursor = line.text.slice(0, cursor - line.from);
-          const suggestion = generateFakeSuggestion(textBeforeCursor);
+          const payload = generatePayload(view, fileName);
+          if (!payload) {
+            isWaitingForSuggestion = false;
+            view.dispatch({ effects: [setSuggestionEffect.of(null)] });
+            return;
+          }
+
+          currentAbortController = new AbortController();
+          const suggestion = await fetcher(
+            payload,
+            currentAbortController.signal,
+          );
+
           isWaitingForSuggestion = false;
           view.dispatch({ effects: [setSuggestionEffect.of(suggestion)] });
         }, DEBOUNCE_DELAY);
@@ -87,6 +122,10 @@ const createDebouncePlugin = (fileName: string) => {
       destroy() {
         if (debounceTimer !== null) {
           clearTimeout(debounceTimer);
+        }
+
+        if (currentAbortController !== null) {
+          currentAbortController.abort();
         }
       }
     },

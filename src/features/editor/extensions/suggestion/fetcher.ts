@@ -5,7 +5,7 @@ import { toast } from "sonner";
 const suggestionRequestSchema = z.object({
   fileName: z.string(),
   code: z.string(),
-  currentLine: z.number(),
+  currentLine: z.string(),
   previousLines: z.string(),
   textBeforeCursor: z.string(),
   textAfterCursor: z.string(),
